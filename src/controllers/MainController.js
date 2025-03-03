@@ -1,6 +1,5 @@
 const { Controller } = require('@farahub/framework/foundation');
 const { Lang, Auth, Workspace, Injection, Doc, Num } = require('@farahub/framework/facades');
-const Validator = require('validatorjs');
 const mongoose = require('mongoose');
 const isValid = require('date-fns/isValid');
 const fromUnixTime = require('date-fns/fromUnixTime');
@@ -229,31 +228,6 @@ class MainController extends Controller {
     }
 
     /**
-     * Make request validator
-     * 
-     * @param Object data to validate
-     * 
-     * @return Validator
-     */
-    async _makeValidator(data, { inject }) {
-        const injections = await inject('main.createOrUpdate.validator', { data });
-
-        return new Validator(data, {
-            'client': 'required',
-            'note': 'string',
-            'items': 'array|min:1',
-            'factors.*.title': 'string',
-            'factors.*.type': 'required|in:ENHANCER,REDUCER',
-            'factors.*.amount': 'required|numeric',
-            'factors.*.unit': 'required|in:PERCENT,PRICE',
-            'validTill': 'date',
-            ...(injections && Object.assign({},
-                ...injections
-            ))
-        });
-    }
-
-    /**
      * Create or upadte an existing invoice
      * 
      * @param {*} req request
@@ -270,15 +244,6 @@ class MainController extends Controller {
                 try {
 
                     const { inject, wsConnection: connection } = req;
-
-                    const validator = await this._makeValidator(req.body, { inject });
-
-                    if (validator.fails()) {
-                        return res.status(422).json({
-                            ok: false,
-                            errors: validator.errors.all()
-                        });
-                    }
 
                     const data = req.body;
                     const { label } = req.params;
